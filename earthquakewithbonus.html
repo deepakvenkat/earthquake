@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Bluewolf Coding Assignment-Deepak</title>
+<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBmA_tihZ8f5sL-i5U05Is-g_DfmQY0Wa0&sensor=true">
+ </script>
+ <script type="text/javascript">
+  var geocoder;
+  var map;
+  function init() {
+    //create a New map and set the default location,New york in this case
+    geocoder = new google.maps.Geocoder();
+    var latlng = new google.maps.LatLng(40.7745457,-73.9718052);
+    var myOptions = {
+      zoom: 8,
+      center: latlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    document.getElementById('address').value="";
+  }
+
+  function codeAddress() {
+    var markers=[];	
+    //obtain the city from the textbox
+    var address = document.getElementById("address").value;
+    geocoder.geocode( { 'address': address}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+	var lat=results[0].geometry.location.lat();
+	var lon=results[0].geometry.location.lng();
+	//for the box i assumed a distance of 1 degree from the center
+	var north=lat+1;
+	var south=lat-1;
+	var east=lon+1;
+	var west=lon-1;
+	//var earthquakedata='http://api.geonames.org/earthquakesJSON?north=41.7745457&south=39.7745457&east=-72.9718052&west=-74.9718052&username=deepakvenkat&callback=?';
+	var eData='http://api.geonames.org/earthquakesJSON?north='+north+'&south='+south+'&east='+east+'&west='+west+'&username=deepakvenkat&callback=?';
+	//alert("lat:"+lat+"lon;"+lon);
+	map.setCenter(results[0].geometry.location);
+	$.getJSON(eData,function(data){
+		//console.log(data);
+		for(var j=0;j<data.earthquakes.length;j++){
+			var latlng=new google.maps.LatLng(data.earthquakes[j].lat,data.earthquakes[j].lng);
+			//placing the markers on the ap according to the data returned by the geonames api
+			markers[j] = new google.maps.Marker({
+			map: map, 
+			position: latlng,
+			title:'Date:'+data.earthquakes[j].datetime+'\n Magnitude:'+data.earthquakes[j].magnitude,
+			html:'\n Date and Time :\t'+data.earthquakes[j].datetime+'\n Magnitude:\t'+data.earthquakes[j].magnitude+'\n Depth: \t'+data.earthquakes[j].depth
+			});
+			//event listener to give info when clicked
+			google.maps.event.addListener(markers[j], "click", function () {
+				alert(this.html);
+			});
+			
+		}
+			
+	}
+	);
+	
+	 
+      } else {
+        alert("Geocode was not successful for the following reason: " + status);
+      }
+    });
+  }
+  
+  function topEarthquakes()
+  {
+	var markers=[];
+	var currentTime=new Date();
+	var date=currentTime.getDate();
+	var month=currentTime.getMonth()+1;
+	var year=currentTime.getFullYear();
+	var now=year+"-"+month+"-"+date;
+	var topdata='http://api.geonames.org/earthquakesJSON?north=90&south=-90&east=90&west=-90&username=deepakvenkat&date=2012-4-10';
+	var infowindow=[];
+	map.setZoom(2);
+	$.getJSON(topdata,function(data){
+		for(var j=0;j<data.earthquakes.length;j++){
+			var latlng=new google.maps.LatLng(data.earthquakes[j].lat,data.earthquakes[j].lng);
+			
+			//console.log(latlng);
+			//placing the markers on the ap according to the data returned by the geonames api
+			markers[j] = new google.maps.Marker({
+			map: map, 
+			position: latlng,
+			title:'Date:'+data.earthquakes[j].datetime+'\n Magnitude:'+data.earthquakes[j].magnitude,
+			html:'\n Date and Time :\t'+data.earthquakes[j].datetime+'\n Magnitude:\t'+data.earthquakes[j].magnitude+'\n Depth: \t'+data.earthquakes[j].depth
+			});
+			//event listener to give info when clicked
+			google.maps.event.addListener(markers[j], "click", function () {
+				//infowindow[j].open(map,this);
+				alert(this.html);
+			});
+			
+			
+		}
+			
+	}
+	);
+  }
+</script>
+</head>
+<body onload="init()">
+  <div>	
+	<Center><H2>Bluewolf Earthquake Project </H2>
+	<h3>Deepak Venkatachalam </H3></center>
+  </div>
+  <div>
+    <input id="address" type="textbox" onkeydown="if(event.keyCode==13) codeAddress()">
+    <input id="bfind "type="button" value="Find Earthquakes" onclick="codeAddress()">
+	<input id="bfind "type="button" value="Find Top Earthquakes" onclick="topEarthquakes()">
+    <input type="button" value="Clear" onclick="init()">
+  </div>
+<div id="map_canvas" style="height:80%;top:30px"></div>
+</body>
+</html>
